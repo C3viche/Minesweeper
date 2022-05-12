@@ -53,7 +53,7 @@ public class MineSweeper extends ApplicationAdapter
         font = new BitmapFont(); 
         renderer = new ShapeRenderer(); 
 
-        mines = 20;
+        mines = 50;
         timer = 0;
         unclicked = true;
 
@@ -61,11 +61,9 @@ public class MineSweeper extends ApplicationAdapter
         fillVisual();
 
         board = new int[20][20];
-        fillBoard();
-
+        
         images = new ArrayList<Texture>();
         gamestate = Gamestate.MENU; 
-
 
         images.add(new Texture("0.png")); 
         images.add(new Texture("1.png")); 
@@ -77,24 +75,25 @@ public class MineSweeper extends ApplicationAdapter
         images.add(new Texture("7.png")); 
         images.add(new Texture("8.png")); 
         images.add(new Texture("bomb.png")); //#9th index in images
-        images.add(new Texture("FacingDown.png")); //#10th index in images
-        images.add(new Texture("flagged.png")); //#11th index in images
-        images.add(new Texture("smile.png")); //#12th index in images
-        images.add(new Texture("frown.png")); //#13th index in images
-        
 
+        images.add(new Texture("FacingDown.png")); //#10th index in images
+        debugPrint();
     }
 
     @Override//this is called 60 times a second
     public void render(){
         //these two lines wipe and reset the screen so when something action had happened
         //the screen won't have overlapping images
-        Gdx.gl.glClearColor(0, 0, 0, 0);
+        Gdx.gl.glClearColor(0, 0, 0.2f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         if(gamestate == Gamestate.GAME)
         {
             uncover();
             drawStats();
+            if(Gdx.input.isKeyJustPressed(Keys.R))
+            {
+                reset(); 
+            }
         }
         if(gamestate == Gamestate.MENU || gamestate == Gamestate.INSTRUCTIONS)
         {
@@ -120,20 +119,15 @@ public class MineSweeper extends ApplicationAdapter
         else if(gamestate == Gamestate.INSTRUCTIONS)
             drawInstructions(); 
         else if(gamestate == Gamestate.GAME)
-            drawBoard();
-            
-
-
-        batch.end(); 
-        if(gamestate == Gamestate.GAME)
         {
-            //drawStats();
+            drawBoard();
         }
+        batch.end();
     }
 
     private void debugPrint()
     {
-        for(int[] row : visualBoard)
+        for(int[] row : board)
         {
             for(int element : row)
             {
@@ -172,9 +166,9 @@ public class MineSweeper extends ApplicationAdapter
         }
     }
 
-    private void uncover() //# also flags
+    private void uncover()
     {
-        if(Gdx.input.justTouched())
+        if(Gdx.input.justTouched() && Gdx.input.isButtonPressed(Input.Buttons.LEFT))
         {
             boolean inBounds = true;
 
@@ -192,28 +186,58 @@ public class MineSweeper extends ApplicationAdapter
             int c = x / Constants.CELL_SIDE;
             int r = 19 - y / Constants.CELL_SIDE;
 
-            if(inBounds && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) //# uncovers
+            if(inBounds)
             {
-                //if(unclicked){}
-                visualBoard[r][c] = board[r][c];
-                System.out.print("UNCOVER c:" + c + " UNCOVER r:" + r + "\n");
-            }
-            if(inBounds && Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) //# flags and unflags
-            {
-                //if(unclicked){}
+                if(unclicked)
+                {
+                    //Set starting vales of bounds around target row and column assuming             it's not a corner, then adjust for corners with if condition
+                    int rStart = r - 1; int rEnd = r + 1;
+                    int cStart = c - 1; int cEnd = c + 1;
 
-                if(visualBoard[r][c] == 11) //# flags
-                {
-                    visualBoard[r][c] = 10;
-                    System.out.print("UNFLAG c:" + c + " UNFLAG r:" + r + "\n");
-                } else //# unflags
-                {
-                    visualBoard[r][c] = 11;
-                    System.out.print("FLAG c:" + c + " FLAG r:" + r + "\n");
+                    //Adjust if a corner and bounds are out of board
+                    if(rStart < 0)
+                        rStart++;
+                    if(rEnd == board.length)
+                        rEnd--;
+                    if(cStart < 0)
+                        cStart++;
+                    if(cEnd == board[r].length)
+                        cEnd--;
+
+                    //loop through and replace with spaces where mines can't be spawned
+                    for(int row = rStart; row <= rEnd; row++)
+                    {
+                        for(int col = cStart; col <= cEnd; col++)
+                        {
+                            board[row][col] = 11;
+                        }
+                    }
+                    debugPrint();
+                    
+                    //fill the board and replace the unmineables to empty spaces
+                    fillBoard();
+                    for(int row = rStart; row <= rEnd; row++)
+                    {
+                        for(int col = cStart; col <= cEnd; col++)
+                        {
+                            if(board[r][c] == 11)
+                            {
+                                board[r][c] = 0;
+                            }
+                        }
+                    }
+                    
+                    //chain if possible and then replace with visual
+                    chain(r, c);
+                    visualBoard[r][c] = board[r][c];
+                    unclicked = false;
                 }
+                chain(r, c);
+                visualBoard[r][c] = board[r][c];
             }
-        }
 
+            System.out.print("UNCOVER c:" + c + " UNCOVER r:" + r + " VisBoard val: " + visualBoard[r][c] + " Board val: " + board[r][c] + "\n");
+        }
     }
 
     private boolean checkWinner()
@@ -248,25 +272,19 @@ public class MineSweeper extends ApplicationAdapter
 
     }
 
-    private void drawStats() //draws top bar, with smiley face, time and #of mines
+    private void drawStats() //#draws top bar, with smiley face, time and #of mines
     {
-        int rect_w; //width of both #ofmines and timer
-        int gap = Constants.WORLD_HEIGHT - Constants.WORLD_WIDTH; //height of the stats bar
+        int rect_w = 0;
         renderer.setProjectionMatrix(viewport.getCamera().combined);
         renderer.begin(ShapeType.Filled);
         renderer.setColor(Color.LIGHT_GRAY); 
 
         //Draws bar at top
-        renderer.rect(0, Constants.WORLD_WIDTH, Constants.WORLD_WIDTH, gap); // main gray rect
+        renderer.rect(0, Constants.WORLD_WIDTH,  
+            Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT-Constants.WORLD_WIDTH); //# main gray rect
 
-        renderer.rect(Constants.CENTER_X,0,0,0); // mines rect
-        
-        //smiley face is 1/12th the width
+        renderer.rect(Constants.CENTER_X,0,0,0); //# mines rect
         renderer.end();
-        
-        batch.begin();
-        batch.draw(images.get(12), Constants.CENTER_X - gap/2, Constants.WORLD_WIDTH, gap, gap);
-        batch.end();
     }
 
     private void drawBoard()
@@ -280,6 +298,7 @@ public class MineSweeper extends ApplicationAdapter
 
                 batch.draw(images.get(num), 
                     c*Constants.CELL_SIDE,
+                    //Constants.WORLD_HEIGHT - (Constants.WORLD_HEIGHT-Constants.WORLD_WIDTH) -(r+1)*Constants.CELL_SIDE,
                     Constants.WORLD_WIDTH - (r + 1) * Constants.CELL_SIDE,
                     Constants.CELL_SIDE, 
                     Constants.CELL_SIDE);   
@@ -294,7 +313,7 @@ public class MineSweeper extends ApplicationAdapter
     {
         int r, c;
 
-        for(int i = 0; i < 100; i++) //#random mines, used to test uncover()
+        for(int i = 0; i < mines; i++) //#random mines, used to test uncover()
         {
             do
             {
@@ -311,13 +330,9 @@ public class MineSweeper extends ApplicationAdapter
     {
         int ctr = 0;
 
-        //Set starting vales of bounds around target row and column assuming it's not a corner, then adjust for corners with if condition
+        //Set starting vales of bounds around target row and column assuming             it's not a corner, then adjust for corners with if condition
         int rStart = row - 1; int rEnd = row + 1;
         int cStart = col - 1; int cEnd = col + 1;
-
-        System.out.println("Row: " + row + " Col: " + col);
-        System.out.println("rStart: " + rStart + " rEnd: " + rEnd);
-        System.out.println("cStart: " + cStart + " cEnd: " + cEnd);
 
         //Adjust if a corner and bounds are out of board
         if(rStart < 0)
@@ -328,10 +343,6 @@ public class MineSweeper extends ApplicationAdapter
             cStart++;
         if(cEnd == board[row].length)
             cEnd--;
-
-        System.out.println("rStart: " + rStart + " rEnd: " + rEnd);
-        System.out.println("cStart: " + cStart + " cEnd: " + cEnd);    
-        System.out.println();
 
         //loop through and count neighbors
         for(int r = rStart; r <= rEnd; r++)
@@ -358,10 +369,9 @@ public class MineSweeper extends ApplicationAdapter
                 visualBoard[r][c] = 10;
             }
         }
-        fillBoard();
         unclicked = true;
     }
-
+    
     private void chain(int r, int c)
     {
         //Checks if in bounds and covered
@@ -376,14 +386,13 @@ public class MineSweeper extends ApplicationAdapter
         //Else it uncovers tile and chains behavior through recursion
         else
         {
-          visualBoard[r][c] = board[r][c];
-          chain(r-1, c-1); chain(r-1, c); chain(r-1, c+1); //chains for row above target
-          chain(r, c-1); chain(r, c+1);                    //chains for sides adjacent to target on same row
-          chain(r+1, c-1); chain(r+1, c); chain(r+1, c+1); //chains for row below target
-        }
-      
+            visualBoard[r][c] = board[r][c];
+            chain(r-1, c-1); chain(r-1, c); chain(r-1, c+1); //chains for row above target
+            chain(r, c-1); chain(r, c+1);                    //chains for sides adjacent to target on same row
+            chain(r+1, c-1); chain(r+1, c); chain(r+1, c+1); //chains for row below target
+        }     
     }
-
+    
     @Override
     public void resize(int width, int height){
         viewport.update(width, height, true); 
