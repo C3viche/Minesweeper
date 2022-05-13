@@ -53,7 +53,7 @@ public class MineSweeper extends ApplicationAdapter
         font = new BitmapFont(); 
         renderer = new ShapeRenderer(); 
 
-        mines = 50;
+        mines = 75;
         timer = 0;
         unclicked = true;
 
@@ -61,7 +61,8 @@ public class MineSweeper extends ApplicationAdapter
         fillVisual();
 
         board = new int[20][20];
-        
+        //board is officially initialized after first click
+
         images = new ArrayList<Texture>();
         gamestate = Gamestate.MENU; 
 
@@ -74,9 +75,12 @@ public class MineSweeper extends ApplicationAdapter
         images.add(new Texture("6.png")); 
         images.add(new Texture("7.png")); 
         images.add(new Texture("8.png")); 
-        images.add(new Texture("bomb.png")); //#9th index in images
-
-        images.add(new Texture("FacingDown.png")); //#10th index in images
+        images.add(new Texture("bomb.png")); //9th index in images
+        images.add(new Texture("FacingDown.png")); //10th index in images
+        images.add(new Texture("flagged.png")); //11th index in images
+        images.add(new Texture("smile.png")); //12th index in images
+        images.add(new Texture("cool.png")); //13th index in images
+        images.add(new Texture("dead.png")); //14th index in images
         debugPrint();
     }
 
@@ -84,12 +88,13 @@ public class MineSweeper extends ApplicationAdapter
     public void render(){
         //these two lines wipe and reset the screen so when something action had happened
         //the screen won't have overlapping images
-        Gdx.gl.glClearColor(0, 0, 0.2f, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 0);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        //Functionality
         if(gamestate == Gamestate.GAME)
         {
             uncover();
-            drawStats();
             if(Gdx.input.isKeyJustPressed(Keys.R))
             {
                 reset(); 
@@ -111,6 +116,7 @@ public class MineSweeper extends ApplicationAdapter
             }
         }
 
+        //Visual
         batch.setProjectionMatrix(viewport.getCamera().combined); 
         batch.begin();
 
@@ -122,7 +128,13 @@ public class MineSweeper extends ApplicationAdapter
         {
             drawBoard();
         }
+        else if(gamestate == Gamestate.WINNER){}
+        else if(gamestate == Gamestate.LOST){}
         batch.end();
+        if(gamestate == Gamestate.GAME)
+        {
+            drawStats();
+        }
     }
 
     private void debugPrint()
@@ -144,7 +156,7 @@ public class MineSweeper extends ApplicationAdapter
         {
             for(int c = 0; c<visualBoard[r].length; c++)
             {
-                visualBoard[r][c] = 10; //#10 means covered tile
+                visualBoard[r][c] = 10; //10 means covered tile
             }
         }
     }
@@ -168,7 +180,7 @@ public class MineSweeper extends ApplicationAdapter
 
     private void uncover()
     {
-        if(Gdx.input.justTouched() && Gdx.input.isButtonPressed(Input.Buttons.LEFT))
+        if(Gdx.input.justTouched()) //detects click
         {
             boolean inBounds = true;
 
@@ -185,8 +197,19 @@ public class MineSweeper extends ApplicationAdapter
 
             int c = x / Constants.CELL_SIDE;
             int r = 19 - y / Constants.CELL_SIDE;
-
-            if(inBounds)
+            if(inBounds && Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) //flagging
+            {
+                if(visualBoard[r][c] == 11) //unflags
+                {
+                    visualBoard[r][c] = 10;
+                    System.out.print("UNFLAG c:" + c + " UNFLAG r:" + r + "\n");
+                } else //flags
+                {
+                    visualBoard[r][c] = 11;
+                    System.out.print("FLAG c:" + c + " FLAG r:" + r + "\n");
+                }
+            }
+            if(inBounds && Gdx.input.isButtonPressed(Input.Buttons.LEFT) && (visualBoard[r][c] != 11)) //uncovering
             {
                 if(unclicked)
                 {
@@ -209,24 +232,24 @@ public class MineSweeper extends ApplicationAdapter
                     {
                         for(int col = cStart; col <= cEnd; col++)
                         {
-                            board[row][col] = 11;
+                            board[row][col] = 99;
                         }
                     }
                     debugPrint();
-                    
+
                     //fill the board and replace the unmineables to empty spaces
                     fillBoard();
                     for(int row = rStart; row <= rEnd; row++)
                     {
                         for(int col = cStart; col <= cEnd; col++)
                         {
-                            if(board[r][c] == 11)
+                            if(board[r][c] == 99)
                             {
                                 board[r][c] = 0;
                             }
                         }
                     }
-                    
+
                     //chain if possible and then replace with visual
                     chain(r, c);
                     visualBoard[r][c] = board[r][c];
@@ -234,20 +257,40 @@ public class MineSweeper extends ApplicationAdapter
                 }
                 chain(r, c);
                 visualBoard[r][c] = board[r][c];
+                System.out.print("UNCOVER c:" + c + " UNCOVER r:" + r + " VisBoard val: " + visualBoard[r][c] + " Board val: " + board[r][c] + "\n");
             }
-
-            System.out.print("UNCOVER c:" + c + " UNCOVER r:" + r + " VisBoard val: " + visualBoard[r][c] + " Board val: " + board[r][c] + "\n");
         }
+
     }
 
     private boolean checkWinner()
     {
-        return false; 
+       for(int r = 0; r < visualBoard.length; r++)
+       {
+            for(int c = 0; c < visualBoard[r].length; c++)
+            {
+                if(!(board[r][c] == 9 && (visualBoard[r][c] == 10 || visualBoard[r][c] == 11)))
+                {
+                    return false;
+                }
+            }
+       }
+       return false;
     }
 
     private boolean checkLoser()
     {
-        return false; 
+        for(int r = 0; r < visualBoard.length; r++)
+        {
+            for(int c = 0; c < visualBoard[r].length; c++)
+            {
+                if(visualBoard[r][c] == 9)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void drawMenu()
@@ -272,19 +315,25 @@ public class MineSweeper extends ApplicationAdapter
 
     }
 
-    private void drawStats() //#draws top bar, with smiley face, time and #of mines
+    private void drawStats() //draws top bar, with smiley face, time and #of mines
     {
-        int rect_w = 0;
+        int rect_w; //width of both #ofmines and timer
+        int gap = Constants.WORLD_HEIGHT - Constants.WORLD_WIDTH; //height of the stats bar
         renderer.setProjectionMatrix(viewport.getCamera().combined);
         renderer.begin(ShapeType.Filled);
         renderer.setColor(Color.LIGHT_GRAY); 
 
         //Draws bar at top
-        renderer.rect(0, Constants.WORLD_WIDTH,  
-            Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT-Constants.WORLD_WIDTH); //# main gray rect
+        renderer.rect(0, Constants.WORLD_WIDTH, Constants.WORLD_WIDTH, gap); // main gray rect
 
-        renderer.rect(Constants.CENTER_X,0,0,0); //# mines rect
+        renderer.rect(Constants.CENTER_X,0,0,0); // mines rect
+
+        //smiley face is 1/12th the width
         renderer.end();
+
+        batch.begin();
+        batch.draw(images.get(12), Constants.CENTER_X - gap/2, Constants.WORLD_WIDTH, gap, gap);
+        batch.end();
     }
 
     private void drawBoard()
@@ -313,7 +362,7 @@ public class MineSweeper extends ApplicationAdapter
     {
         int r, c;
 
-        for(int i = 0; i < mines; i++) //#random mines, used to test uncover()
+        for(int i = 0; i < mines; i++) 
         {
             do
             {
@@ -322,7 +371,7 @@ public class MineSweeper extends ApplicationAdapter
             }
             while(board[r][c] != 0);
 
-            board[r][c] = 9; //#9 means uncovered mine
+            board[r][c] = 9; //9 means uncovered mine
         }
     }
 
@@ -371,7 +420,7 @@ public class MineSweeper extends ApplicationAdapter
         }
         unclicked = true;
     }
-    
+
     private void chain(int r, int c)
     {
         //Checks if in bounds and covered
@@ -392,7 +441,7 @@ public class MineSweeper extends ApplicationAdapter
             chain(r+1, c-1); chain(r+1, c); chain(r+1, c+1); //chains for row below target
         }     
     }
-    
+
     @Override
     public void resize(int width, int height){
         viewport.update(width, height, true); 
