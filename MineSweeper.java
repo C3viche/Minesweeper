@@ -19,7 +19,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.Texture; 
 import com.badlogic.gdx.InputProcessor; 
 import com.badlogic.gdx.*; 
-import com.badlogic.gdx.utils.Array;  
+import com.badlogic.gdx.utils.Array; 
 import java.util.*; 
 
 public class MineSweeper extends ApplicationAdapter 
@@ -29,8 +29,8 @@ public class MineSweeper extends ApplicationAdapter
 
     //These are all needed to draw text on the screeeeeeen!!!!!
     private SpriteBatch batch; 
-    private BitmapFont font; 
-    private GlyphLayout layout; 
+    private BitmapFont font;
+    private GlyphLayout layout;
     private ShapeRenderer renderer; 
 
     private int[][] visualBoard;
@@ -40,6 +40,9 @@ public class MineSweeper extends ApplicationAdapter
     private int timer;
     private int mines;
     private boolean unclicked;
+   
+    
+    private int finishedCtr;
 
     private Gamestate gamestate; 
 
@@ -50,12 +53,15 @@ public class MineSweeper extends ApplicationAdapter
 
         batch = new SpriteBatch(); 
         layout = new GlyphLayout(); 
-        font = new BitmapFont(); 
+        font = new BitmapFont(Gdx.files.internal("Minesweeper Font.fnt"),
+                Gdx.files.internal("Minesweeper Font.png"), false); 
         renderer = new ShapeRenderer(); 
 
-        mines = 75;
+        mines = 10;
         timer = 0;
         unclicked = true;
+        
+        
 
         visualBoard = new int[20][20];
         fillVisual();
@@ -97,7 +103,19 @@ public class MineSweeper extends ApplicationAdapter
             uncover();
             if(Gdx.input.isKeyJustPressed(Keys.R))
             {
-                reset(); 
+                reset();
+                gamestate = Gamestate.GAME;
+                
+            }
+            if(checkLoser())
+            {
+                gamestate = Gamestate.LOST;
+                
+            }
+            if(checkWinner())
+            {
+                gamestate = Gamestate.WINNER;
+                
             }
         }
         if(gamestate == Gamestate.MENU || gamestate == Gamestate.INSTRUCTIONS)
@@ -128,8 +146,16 @@ public class MineSweeper extends ApplicationAdapter
         {
             drawBoard();
         }
-        else if(gamestate == Gamestate.WINNER){}
-        else if(gamestate == Gamestate.LOST){}
+        else if(gamestate == Gamestate.WINNER)
+        {
+            drawWinner();
+            finishedCtr++;
+        }
+        else if(gamestate == Gamestate.LOST)
+        {
+            drawLoser();
+            finishedCtr++;
+        }
         batch.end();
         if(gamestate == Gamestate.GAME)
         {
@@ -197,7 +223,7 @@ public class MineSweeper extends ApplicationAdapter
 
             int c = x / Constants.CELL_SIDE;
             int r = 19 - y / Constants.CELL_SIDE;
-            if(inBounds && Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) //flagging
+            if(inBounds && Gdx.input.isButtonPressed(Input.Buttons.RIGHT)) //flagging
             {
                 if(visualBoard[r][c] == 11) //unflags
                 {
@@ -269,13 +295,13 @@ public class MineSweeper extends ApplicationAdapter
        {
             for(int c = 0; c < visualBoard[r].length; c++)
             {
-                if(!(board[r][c] == 9 && (visualBoard[r][c] == 10 || visualBoard[r][c] == 11)))
+                if(board[r][c] != 9 && visualBoard[r][c] == 10)
                 {
                     return false;
-                }
+                } 
             }
        }
-       return false;
+       return true;
     }
 
     private boolean checkLoser()
@@ -332,7 +358,12 @@ public class MineSweeper extends ApplicationAdapter
         renderer.end();
 
         batch.begin();
-        batch.draw(images.get(12), Constants.CENTER_X - gap/2, Constants.WORLD_WIDTH, gap, gap);
+        Texture face = images.get(12);
+        if(checkWinner())
+            face = images.get(13);
+        if(checkLoser())
+            face = images.get(14);
+        batch.draw(face, Constants.CENTER_X - gap/2, Constants.WORLD_WIDTH, gap, gap);
         batch.end();
     }
 
@@ -355,7 +386,29 @@ public class MineSweeper extends ApplicationAdapter
         }
 
     }
+      
+    private void drawWinner()
+    {
+        font.setColor(1f, 1f, 1f, 1f);
+        layout.setText(font, "You WON!");
+        font.draw(batch,
+            layout,
+            Constants.WORLD_WIDTH / 2 - layout.width / 2,
+            Constants.WORLD_HEIGHT / 2 + layout.height / 2);
 
+    }
+    
+    private void drawLoser()
+    {
+        font.setColor(1f, 1f, 1f, 1f);
+        layout.setText(font, "You lost...");
+        font.draw(batch,
+            layout,
+            Constants.WORLD_WIDTH / 2 - layout.width / 2,
+            Constants.WORLD_HEIGHT / 2 + layout.height / 2);
+
+    }
+    
     private void generateMines() //Maybe we should name this generateMines() and
     //then name another method fillBoard where we 
     //generate the board (mines, neighbors,etc.)
