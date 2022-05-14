@@ -1,0 +1,145 @@
+
+Minesweeper Title Appear Atlas.png
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+sprite
+  rotate: false
+  xy: 1, 435
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 0
+sprite
+  rotate: false
+  xy: 1, 373
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 1
+sprite
+  rotate: false
+  xy: 339, 435
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 2
+sprite
+  rotate: false
+  xy: 1, 311
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 3
+sprite
+  rotate: false
+  xy: 339, 373
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 4
+sprite
+  rotate: false
+  xy: 677, 435
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 5
+sprite
+  rotate: false
+  xy: 1, 249
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 6
+sprite
+  rotate: false
+  xy: 339, 311
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 7
+sprite
+  rotate: false
+  xy: 677, 373
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 8
+sprite
+  rotate: false
+  xy: 1, 187
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 9
+sprite
+  rotate: false
+  xy: 339, 249
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 10
+sprite
+  rotate: false
+  xy: 677, 311
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 11
+sprite
+  rotate: false
+  xy: 1, 125
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 12
+sprite
+  rotate: false
+  xy: 339, 187
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 13
+sprite
+  rotate: false
+  xy: 677, 249
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 14
+sprite
+  rotate: false
+  xy: 1, 63
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 15
+sprite
+  rotate: false
+  xy: 339, 125
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 16
+sprite
+  rotate: false
+  xy: 677, 187
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 17
+sprite
+  rotate: false
+  xy: 1, 1
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 18
+sprite
+  rotate: false
+  xy: 339, 63
+  size: 336, 60
+  orig: 336, 60
+  offset: 0, 0
+  index: 19

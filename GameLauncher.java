@@ -6,7 +6,7 @@ public class GameLauncher
     {
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration(); 
         config.width = 400;//set the width of your screen window
-        config.height = 430; //set the height of your screen window
+        config.height = 420; //set the height of your screen window
         //keep these the same ratio as your WORLD UNITS!!!!!!!!!!
         
         
@@ -14,4 +14,3 @@ public class GameLauncher
         LwjglApplication launcher = new LwjglApplication(new MineSweeper(), config);
     }
 }
-0

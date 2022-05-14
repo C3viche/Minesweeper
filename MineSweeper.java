@@ -6,6 +6,9 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.viewport.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer; 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
@@ -19,7 +22,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.Texture; 
 import com.badlogic.gdx.InputProcessor; 
 import com.badlogic.gdx.*; 
-import com.badlogic.gdx.utils.Array; 
+import com.badlogic.gdx.utils.Array;  
 import java.util.*; 
 
 public class MineSweeper extends ApplicationAdapter 
@@ -29,9 +32,13 @@ public class MineSweeper extends ApplicationAdapter
 
     //These are all needed to draw text on the screeeeeeen!!!!!
     private SpriteBatch batch; 
-    private BitmapFont font;
-    private GlyphLayout layout;
-    private ShapeRenderer renderer; 
+    private BitmapFont font; 
+    private GlyphLayout layout; 
+    private ShapeRenderer renderer;
+    private TextureAtlas titleAppearAtlas;
+    private TextureAtlas titleShineAtlas;
+    private Animation<TextureRegion> animation1;
+    private Animation<TextureRegion> animation2;
 
     private int[][] visualBoard;
     private int[][] board;
@@ -39,10 +46,9 @@ public class MineSweeper extends ApplicationAdapter
 
     private int timer;
     private int mines;
-    private boolean unclicked;
-   
-    
     private int finishedCtr;
+    private boolean unclicked;
+    private float timePassed;
 
     private Gamestate gamestate; 
 
@@ -54,14 +60,18 @@ public class MineSweeper extends ApplicationAdapter
         batch = new SpriteBatch(); 
         layout = new GlyphLayout(); 
         font = new BitmapFont(Gdx.files.internal("Minesweeper Font.fnt"),
-                Gdx.files.internal("Minesweeper Font.png"), false); 
-        renderer = new ShapeRenderer(); 
+                Gdx.files.internal("Minesweeper Font.png"), false);
+        font.getData().setScale(Constants.FONT_SCALE);
+        renderer = new ShapeRenderer();
+        titleAppearAtlas = new TextureAtlas(Gdx.files.internal("Minesweeper Title Appear Atlas.atlas"));
+        titleShineAtlas = new TextureAtlas(Gdx.files.internal("Minesweeper Title Shine Atlas.atlas"));
+        animation1 = new Animation(1/12f, titleAppearAtlas.getRegions());
+        animation2 = new Animation(1/8f, titleShineAtlas.getRegions());
 
-        mines = 10;
+        mines = 75;
         timer = 0;
         unclicked = true;
-        
-        
+        timePassed = 0;
 
         visualBoard = new int[20][20];
         fillVisual();
@@ -92,6 +102,7 @@ public class MineSweeper extends ApplicationAdapter
 
     @Override//this is called 60 times a second
     public void render(){
+        
         //these two lines wipe and reset the screen so when something action had happened
         //the screen won't have overlapping images
         Gdx.gl.glClearColor(0, 0, 0, 0);
@@ -136,8 +147,9 @@ public class MineSweeper extends ApplicationAdapter
 
         //Visual
         batch.setProjectionMatrix(viewport.getCamera().combined); 
+        
         batch.begin();
-
+        timePassed += Gdx.graphics.getDeltaTime();
         if(gamestate == Gamestate.MENU)
             drawMenu(); 
         else if(gamestate == Gamestate.INSTRUCTIONS)
@@ -157,6 +169,7 @@ public class MineSweeper extends ApplicationAdapter
             finishedCtr++;
         }
         batch.end();
+        
         if(gamestate == Gamestate.GAME)
         {
             drawStats();
@@ -327,9 +340,20 @@ public class MineSweeper extends ApplicationAdapter
             layout,
             Constants.WORLD_WIDTH / 2 - layout.width / 2,
             Constants.WORLD_HEIGHT / 2 + layout.height / 2);
-
+        
+        //Play two animations, one after the other    
+        batch.draw(animation1.getKeyFrame(timePassed, false), 
+            Constants.WORLD_WIDTH / 2 - layout.width / 2 - 24, 
+            Constants.WORLD_HEIGHT / 2 + layout.height / 2 + 20);
+        //if first animation finished, then play next one
+        if(animation1.isAnimationFinished(timePassed))
+        {
+            batch.draw(animation2.getKeyFrame(timePassed - animation1.getAnimationDuration(), true), 
+                Constants.WORLD_WIDTH / 2 - layout.width / 2 - 24, 
+                Constants.WORLD_HEIGHT / 2 + layout.height / 2 + 20);
+        }
     }
-
+    
     private void drawInstructions()
     {   
         font.setColor(1f, 0f, 0f, 1f);
@@ -460,7 +484,7 @@ public class MineSweeper extends ApplicationAdapter
 
         return ctr;
     }
-
+    
     private void reset()
     {
         for(int r = 0; r < board.length; r++)
@@ -503,6 +527,7 @@ public class MineSweeper extends ApplicationAdapter
     @Override
     public void dispose(){
         batch.dispose();
-
+        titleAppearAtlas.dispose();
+        titleShineAtlas.dispose();
     }
 }
