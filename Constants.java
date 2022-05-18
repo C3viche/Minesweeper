@@ -7,7 +7,7 @@
 public class Constants
 {
     public static final int WORLD_WIDTH = 400; 
-    public static final int WORLD_HEIGHT = 420; 
+    public static final int WORLD_HEIGHT = 430; 
 
     public static final float FONT_SCALE = 0.5f;
     public static final int NUM_ROWS = 20; 
