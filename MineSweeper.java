@@ -143,7 +143,7 @@ public class MineSweeper extends ApplicationAdapter
         backToGameButton = new Rectangle(125, 150, 160, 40);
         minesButton = new Rectangle(125, 220, 160, 40);
 
-        mines = 5;
+        mines = 50;
         seconds = 0;
         timerDisplay = ""+seconds;
         unclicked = true;
